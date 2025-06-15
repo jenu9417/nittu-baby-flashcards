@@ -24,7 +24,7 @@ export default function SettingsScreen({ navigation }) {
 
   const [localSettings, setLocalSettings] = useState({
     delay: delay ?? 3000,
-    fontSize: fontSize ?? 120,
+    fontSize: fontSize ?? 160,
     fontColor: fontColor ?? '#ffffff',
     fontFamily: fontFamily ?? 'System',
     backgroundColor: backgroundColor ?? '#000000',

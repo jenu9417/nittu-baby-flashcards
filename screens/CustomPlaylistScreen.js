@@ -35,7 +35,7 @@ export default function CustomPlaylistScreen({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [newSlide, setNewSlide] = useState({
     text: '',
-    fontSize: 120,
+    fontSize: 160,
     fontColor: '#ffffff',
     backgroundColor: '#000000',
     fontFamily: 'System'
@@ -294,7 +294,7 @@ export default function CustomPlaylistScreen({ navigation }) {
                   setSlides([...slides, newSlide]);
                   setNewSlide({
                     text: '',
-                    fontSize: 120,
+                    fontSize: 160,
                     fontColor: '#ffffff',
                     backgroundColor: '#000000',
                     fontFamily: 'System'
