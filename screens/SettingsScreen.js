@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Pressable } from 'react-native';
-import { useFlashcardStore } from '../store/useFlashcardStore';
+import { View, Text, TextInput, StyleSheet, Pressable, ToastAndroid } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import { useFlashcardStore } from '../store/useFlashcardStore';
 
 const colorOptions = [
   { name: 'Black', value: '#000000' },
@@ -23,98 +23,79 @@ export default function SettingsScreen({ navigation }) {
   } = useFlashcardStore();
 
   const [localSettings, setLocalSettings] = useState({
-    delay,
-    fontSize,
-    fontColor,
-    fontFamily,
-    backgroundColor,
+    delay: delay || 3000,
+    fontSize: fontSize || 120,
+    fontColor: fontColor || '#ffffff',
+    fontFamily: fontFamily || 'System',
+    backgroundColor: backgroundColor || '#000000'
   });
 
   useEffect(() => {
     loadSettings();
   }, []);
 
-  const save = async () => {
-    await updateSettings(localSettings);
-    navigation.goBack();
-  };
-
   const handleChange = (key, value) => {
     setLocalSettings({ ...localSettings, [key]: value });
+  };
+
+  const save = async () => {
+    await updateSettings(localSettings);
+    ToastAndroid.show("Settings saved", ToastAndroid.SHORT);
+    navigation.goBack();
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>Settings</Text>
 
-      <View style={styles.inputWrapper}>
-        <TextInput
-          keyboardType="numeric"
-          style={styles.input}
-          value={String(localSettings.delay)}
-          onChangeText={text => handleChange('delay', parseInt(text) || 0)}
-        />
-        <Text style={styles.watermark}>Autoplay Delay (ms)</Text>
-      </View>
+      <TextInput
+        keyboardType="numeric"
+        style={styles.input}
+        value={String(localSettings.delay)}
+        onChangeText={text => handleChange('delay', parseInt(text) || 0)}
+        placeholder="Autoplay Delay (ms)"
+      />
 
-      <View style={styles.inputWrapper}>
-        <TextInput
-          keyboardType="numeric"
-          style={styles.input}
-          value={String(localSettings.fontSize)}
-          onChangeText={text => handleChange('fontSize', parseInt(text) || 0)}
-        />
-        <Text style={styles.watermark}>Font Size</Text>
-      </View>
+      <TextInput
+        keyboardType="numeric"
+        style={styles.input}
+        value={String(localSettings.fontSize)}
+        onChangeText={text => handleChange('fontSize', parseInt(text) || 0)}
+        placeholder="Font Size"
+      />
 
       <Text style={styles.label}>Font Color</Text>
       <View style={styles.swatchRow}>
-        {colorOptions.map((opt) => {
-          const isSelected = localSettings?.fontColor === opt.value;
-          const colorValue = opt?.value ?? '#000000';
-
-          return (
-            <Pressable
-              key={colorValue}
-              style={[
-                styles.swatch,
-                {
-                  backgroundColor: colorValue,
-                  borderColor: isSelected ? '#000' : 'transparent',
-                },
-              ]}
-              onPress={() => handleChange('fontColor', colorValue)}
-            />
-          );
-        })}
+        {colorOptions.map((opt) => (
+          <Pressable
+            key={opt.value}
+            style={[styles.swatch, {
+              backgroundColor: opt.value,
+              borderColor: localSettings.fontColor === opt.value ? '#000' : 'transparent'
+            }]}
+            onPress={() => handleChange('fontColor', opt.value)}
+          />
+        ))}
       </View>
 
       <Text style={styles.label}>Background Color</Text>
       <View style={styles.swatchRow}>
-        {colorOptions.map((opt) => {
-          const isSelected = localSettings?.backgroundColor === opt.value;
-          const colorValue = opt?.value ?? '#ffffff';
-
-          return (
-            <Pressable
-              key={colorValue}
-              style={[
-                styles.swatch,
-                {
-                  backgroundColor: colorValue,
-                  borderColor: isSelected ? '#000' : 'transparent',
-                },
-              ]}
-              onPress={() => handleChange('backgroundColor', colorValue)}
-            />
-          );
-        })}
+        {colorOptions.map((opt) => (
+          <Pressable
+            key={opt.value}
+            style={[styles.swatch, {
+              backgroundColor: opt.value,
+              borderColor: localSettings.backgroundColor === opt.value ? '#000' : 'transparent'
+            }]}
+            onPress={() => handleChange('backgroundColor', opt.value)}
+          />
+        ))}
       </View>
 
       <Text style={styles.label}>Font Style</Text>
       <Picker
         selectedValue={localSettings.fontFamily}
-        onValueChange={val => handleChange('fontFamily', val)}
+        onValueChange={(val) => handleChange('fontFamily', val)}
         style={styles.picker}
       >
         <Picker.Item label="System" value="System" />
@@ -150,18 +131,6 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   buttonText: { color: '#fff', fontWeight: 'bold' },
-  inputWrapper: {
-    position: 'relative',
-    marginBottom: 12,
-  },
-  watermark: {
-    position: 'absolute',
-    right: 12,
-    top: 12,
-    color: '#aaa',
-    fontSize: 14,
-    alignItems: 'center'
-  },
   label: {
     marginBottom: 4,
     marginTop: 12,

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, Pressable, FlatList, StyleSheet, Alert, ToastAndroid } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 
 const builtInPlaylists = [
   { id: 'alphabet', title: 'A–Z' },
@@ -10,170 +9,137 @@ const builtInPlaylists = [
   { id: 'animals', title: 'Animals 🐾' },
 ];
 
-export default function HomeScreen({ navigation }) {
-  const [customPlaylists, setCustomPlaylists] = useState([]);
+const MAX_CUSTOM_PLAYLISTS = 10;
 
-  useFocusEffect(
-    React.useCallback(() => {
-      (async () => {
-        const stored = await AsyncStorage.getItem('customPlaylists');
-        setCustomPlaylists(stored ? JSON.parse(stored) : []);
-      })();
-    }, [])
-  );
+export default function HomeScreen() {
+  const [customPlaylists, setCustomPlaylists] = useState([]);
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    const loadPlaylists = async () => {
+      try {
+        const data = await AsyncStorage.getItem('customPlaylists');
+        setCustomPlaylists(data ? JSON.parse(data) : []);
+      } catch (err) {
+        console.error('Failed to load playlists:', err);
+        setCustomPlaylists([]);
+      }
+    };
+    const unsubscribe = navigation.addListener('focus', loadPlaylists);
+    return unsubscribe;
+  }, [navigation]);
+
+  const deletePlaylist = async (index) => {
+    try {
+      const updated = [...customPlaylists];
+      updated.splice(index, 1);
+      setCustomPlaylists(updated);
+      await AsyncStorage.setItem('customPlaylists', JSON.stringify(updated));
+    } catch (err) {
+      Alert.alert('Error', 'Failed to delete playlist.');
+    }
+  };
+
+  const handleCreate = () => {
+    if (customPlaylists.length >= MAX_CUSTOM_PLAYLISTS) {
+      ToastAndroid.show("Maximum of 10 custom playlists reached.", ToastAndroid.SHORT);
+      return;
+    }
+    navigation.navigate('CustomPlaylist');
+  };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
-      <View style={styles.container}>
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>Nittu - Baby Flashcards</Text>
-        </View>
+    <View style={styles.container}>
+      <Text style={styles.title}>Nittu - Baby Flashcards</Text>
 
-        {/* Default Playlists */}
-        <Text style={styles.sectionHeader}>Default Playlists</Text>
-        {builtInPlaylists.map((item) => (
+      {builtInPlaylists.map((pl) => (
+        <Pressable
+          key={pl.id}
+          style={styles.playlistButton}
+          onPress={() => navigation.navigate('Flashcard', { playlistId: pl.id })}>
+          <Text style={styles.buttonText}>{pl.title}</Text>
+        </Pressable>
+      ))}
+
+      {customPlaylists && customPlaylists.map((pl, idx) => (
+        <View key={idx} style={styles.playlistRow}>
           <Pressable
-            key={item.id}
-            style={styles.card}
-            onPress={() => navigation.navigate('Flashcard', { playlistId: item.id })}
-          >
-            <Text style={styles.cardText}>{item.title}</Text>
+            style={styles.playlistButton}
+            onPress={() => navigation.navigate('Flashcard', {
+              playlistId: `custom-${idx}`,
+              custom: pl.slides,
+              customDelay: pl.delay || 3000,
+            })}>
+            <Text style={styles.buttonText}>{pl.name}</Text>
           </Pressable>
-        ))}
-
-        {/* Custom Playlists */}
-        {customPlaylists.map((pl, idx) => (
-          <View key={idx} style={styles.cardWithActions}>
-            <Pressable
-              style={[styles.card, styles.customCard]}
-              onPress={() =>
-                navigation.navigate('Flashcard', {
-                  playlistId: `custom-${idx}`,
-                  custom: pl.slides,
-                })
-              }
-            >
-              <Text style={styles.cardText}>{pl.name}</Text>
-              <View style={styles.iconRow}>
-                <Pressable
-                  onPress={() =>
-                    navigation.navigate('CustomPlaylist', { editIndex: idx, playlistData: pl })
-                  }
-                >
-                  <Text style={styles.iconText}>✏️</Text>
-                </Pressable>
-                <Pressable
-                  onPress={async () => {
-                    const existing = await AsyncStorage.getItem('customPlaylists');
-                    if (!existing) return;
-                    const parsed = JSON.parse(existing);
-                    parsed.splice(idx, 1);
-                    await AsyncStorage.setItem('customPlaylists', JSON.stringify(parsed));
-                    setCustomPlaylists(parsed);
-                  }}
-                >
-                  <Text style={[styles.iconText, { marginLeft: 10 }]}>🗑️</Text>
-                </Pressable>
-              </View>
-            </Pressable>
-          </View>
-        ))}
-
-        {/* Actions */}
-        <Pressable style={[styles.card, styles.customCard]} onPress={() => navigation.navigate('CustomPlaylist')}>
-          <Text style={styles.cardText}>+ Create Custom Playlist</Text>
-        </Pressable>
-
-        <Pressable style={[styles.card, styles.customCard]} onPress={() => navigation.navigate('Settings')}>
-          <Text style={styles.cardText}>⚙ Settings</Text>
-        </Pressable>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Created with ❤️ by Jenu</Text>
+          <Pressable
+            style={styles.iconBtn}
+            onPress={() => navigation.navigate('CustomPlaylist', {
+              editIndex: idx,
+              playlistData: pl
+            })}>
+            <Text>✏️</Text>
+          </Pressable>
+          <Pressable
+            style={styles.iconBtn}
+            onPress={() => deletePlaylist(idx)}>
+            <Text>🗑️</Text>
+          </Pressable>
         </View>
+      ))}
+
+      <Pressable
+        style={[styles.button, customPlaylists.length >= MAX_CUSTOM_PLAYLISTS && { backgroundColor: '#999' }]}
+        onPress={handleCreate}
+        disabled={customPlaylists.length >= MAX_CUSTOM_PLAYLISTS}>
+        <Text style={styles.buttonText}>+ Custom Playlist</Text>
+      </Pressable>
+
+      <Pressable style={[styles.button, { backgroundColor: 'gray' }]} onPress={() => navigation.navigate('Settings')}>
+        <Text style={styles.buttonText}>⚙ Settings</Text>
+      </Pressable>
+
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>Created with ❤️ by Jenu</Text>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    padding: 20, 
-    backgroundColor: '#fff',
-    justifyContent: 'space-between',
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    fontFamily: 'Roboto',
-    fontStyle: 'Italic',
-    marginBottom: 5
-  },
-  card: {
-    padding: 20,
-    borderRadius: 10,
+  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
+  playlistButton: {
     backgroundColor: '#000',
-    marginVertical: 10,
-  },
-  textContainer: {
-    borderWidth: 2,
-    borderColor: 'black',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 10
-  },
-  customCard: { backgroundColor: '#444' },
-  cardText: { color: '#fff', fontSize: 18 },
-  sectionHeader: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 15,
-    marginBottom: 5,
-    color: '#333',
-  },
-  cardGroup: {
-    marginBottom: 20,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-    marginHorizontal: 10,
-  },
-  smallButton: {
-    backgroundColor: '#333',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-  },
-  smallButtonText: {
-    color: 'white',
-    fontSize: 14,
-  },
-  cardWithActions: {
-    position: 'relative',
+    padding: 12,
+    borderRadius: 10,
     marginBottom: 10,
+    flex: 1
   },
-  iconRow: {
-    position: 'absolute',
-    right: 20,
-    top: 20,
+  button: {
+    backgroundColor: '#000',
+    padding: 12,
+    alignItems: 'center',
+    borderRadius: 10,
+    marginTop: 10
+  },
+  buttonText: { color: '#fff', fontWeight: 'bold', textAlign: 'center' },
+  playlistRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+    gap: 6
   },
-  iconText: {
-    fontSize: 18,
-    color: '#fff',
+  iconBtn: {
+    padding: 8,
   },
   footer: {
-    alignItems: 'center',
     marginTop: 'auto',
-    marginBottom: 1,
+    alignItems: 'center',
+    marginBottom: 10,
   },
   footerText: {
     fontSize: 14,
     color: '#999',
-    textAlign: 'center',
   },
 });

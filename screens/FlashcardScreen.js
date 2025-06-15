@@ -1,119 +1,109 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFlashcardStore } from '../store/useFlashcardStore';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 
-export default function FlashcardScreen({ route, navigation }) {
-  const { playlistId, custom } = route.params;
+export default function FlashcardScreen() {
+  const route = useRoute();
+  const navigation = useNavigation();
+
+  const playlistId = route.params?.playlistId || 'alphabet';
+  const customSlides = route.params?.custom || null;
+  const customDelay = route.params?.customDelay || 3000;
+
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const timerRef = useRef(null);
+  const [slides, setSlides] = useState([]);
 
-  const {
-    setPlaylist,
-    currentPlaylist,
-    fontSize, fontColor, fontFamily, backgroundColor,
-    delay
-  } = useFlashcardStore();
-
-  const insets = useSafeAreaInsets();
-
-  const isCustom = !!custom;
-  const playlist = isCustom ? custom : currentPlaylist;
-
-  // Load default playlist if not custom
   useEffect(() => {
-    if (!isCustom) {
-      let cards = [];
-      if (playlistId === 'alphabet') {
-        cards = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
-      } else if (playlistId === 'numbers') {
-        cards = Array.from({ length: 10 }, (_, i) => String(i));
-      } else if (playlistId === 'animals') {
-        cards = ['🐱', '🐶', '🦁', '🐯', '🦆', '🐻', '🐢', '🦒', '🦓'];
-      }
-      setPlaylist(cards);
+    let cards = [];
+    if (customSlides && Array.isArray(customSlides)) {
+      cards = customSlides;
+    } else if (playlistId === 'alphabet') {
+      cards = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
+    } else if (playlistId === 'numbers') {
+      cards = Array.from({ length: 10 }, (_, i) => String(i));
+    } else if (playlistId === 'animals') {
+      cards = ['🐱', '🐶', '🦁', '🐯', '🦆', '🐻', '🐢', '🦒', '🦓'];
     }
-  }, []);
+    setSlides(cards);
+  }, [playlistId, customSlides]);
 
-  // Autoplay
   useEffect(() => {
-    if (!paused && playlist.length > 0) {
-      timerRef.current = setTimeout(() => {
-        if (index < playlist.length - 1) {
-          setIndex(index + 1);
-        } else {
-          navigation.goBack();
-        }
-      }, delay);
+    if (!customSlides && slides.length > 0) {
+      const timer = setTimeout(() => {
+        setIndex(prev => (prev + 1 < slides.length ? prev + 1 : 0));
+      }, customDelay);
+      return () => clearTimeout(timer);
     }
-    return () => clearTimeout(timerRef.current);
-  }, [index, paused, playlist]);
+  }, [index, slides, customDelay, customSlides]);
 
-  const next = () => {
-    setPaused(true);
-    if (index < playlist.length - 1) setIndex(index + 1);
-    else navigation.goBack();
-  };
+  const goBack = () => setIndex(prev => (prev > 0 ? prev - 1 : 0));
+  const goForward = () => setIndex(prev => (prev + 1 < slides.length ? prev + 1 : 0));
 
-  const prev = () => {
-    setPaused(true);
-    if (index > 0) setIndex(index - 1);
-  };
-
-  const slide = playlist[index];
+  const current = slides[index];
+  const backgroundColor = current?.backgroundColor || '#000';
+  const fontColor = current?.fontColor || '#fff';
+  const fontSize = current?.fontSize || 120;
+  const fontFamily = current?.fontFamily || 'System';
+  const displayText = typeof current === 'string' ? current : current?.text || '?';
 
   return (
-    <View style={[styles.container, { backgroundColor: slide?.backgroundColor || backgroundColor }]}>
-      <Pressable onPress={() => navigation.goBack()} style={[styles.closeButton, { top: insets.top + 10 }]}>
-        <Text style={styles.closeText}>✕</Text>
+    <View style={[styles.container, { backgroundColor }]}>
+      <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Text style={styles.backText}>✕</Text>
       </Pressable>
 
-      {slide ? (
-        <Text
-          style={{
-            color: slide?.fontColor || fontColor,
-            fontSize: slide?.fontSize || (playlistId === 'animals' ? 160 : fontSize),
-            fontFamily: slide?.fontFamily || fontFamily,
-          }}
-        >
-          {typeof slide === 'string' ? slide : slide?.text || '[No Text]'}
-        </Text>
-      ) : (
-        <Text style={{ color: '#fff' }}>[Slide Missing]</Text>
-      )}
+      <Pressable
+        style={styles.leftArea}
+        onPress={goBack}
+      />
 
-      <Pressable style={styles.leftZone} onPress={prev} />
-      <Pressable style={styles.rightZone} onPress={next} />
+      <View style={styles.centerArea}>
+        <Text style={{ color: fontColor, fontSize, fontFamily }}>{displayText}</Text>
+      </View>
+
+      <Pressable
+        style={styles.rightArea}
+        onPress={goForward}
+      />
     </View>
   );
 }
 
+const { width } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  closeButton: {
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButton: {
     position: 'absolute',
+    top: 40,
     right: 20,
     zIndex: 10,
   },
-  closeText: {
+  backText: {
+    fontSize: 28,
     color: '#fff',
-    fontSize: 26,
   },
-  leftZone: {
+  centerArea: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  leftArea: {
     position: 'absolute',
     left: 0,
     top: 0,
     bottom: 0,
-    width: '50%',
-    zIndex: 5,
+    width: width / 2,
   },
-  rightZone: {
+  rightArea: {
     position: 'absolute',
     right: 0,
     top: 0,
     bottom: 0,
-    width: '50%',
-    zIndex: 5,
+    width: width / 2,
   },
 });
