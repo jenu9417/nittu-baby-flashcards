@@ -53,26 +53,42 @@ export default function CustomPlaylistScreen({ navigation }) {
       return;
     }
     setPlaylistError(''); // clear if valid
-
-    const existing = await AsyncStorage.getItem('customPlaylists');
-    const parsed = existing ? JSON.parse(existing) : [];
-
-    const newEntry = {
-      name: playlistName,
-      slides,
-      delay: parseInt(autoplayDelay) || 0,
-    };
-
-    const updated = [...parsed];
-    if (editIndex !== undefined) {
-      updated[editIndex] = newEntry;
-    } else {
-      updated.push(newEntry);
+  
+    try {
+      const existing = await AsyncStorage.getItem('customPlaylists');
+      let parsed = [];
+  
+      if (existing) {
+        try {
+          parsed = JSON.parse(existing);
+          if (!Array.isArray(parsed)) {
+            parsed = [];
+          }
+        } catch (parseErr) {
+          console.error('JSON parse error:', parseErr);
+          parsed = [];
+        }
+      }
+  
+      const newEntry = {
+        name: playlistName,
+        slides: Array.isArray(slides) ? slides : [],
+        delay: parseInt(autoplayDelay) || 0,
+      };
+  
+      const updated = [...parsed];
+      if (editIndex !== undefined) {
+        updated[editIndex] = newEntry;
+      } else {
+        updated.push(newEntry);
+      }
+  
+      await AsyncStorage.setItem('customPlaylists', JSON.stringify(updated));
+      navigation.goBack();
+    } catch (err) {
+      console.error('Error saving playlist:', err);
     }
-
-    await AsyncStorage.setItem('customPlaylists', JSON.stringify(updated));
-    navigation.goBack();
-  };
+  };  
 
   return (
     <View style={styles.container}>
