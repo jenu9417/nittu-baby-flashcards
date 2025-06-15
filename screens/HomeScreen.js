@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Pressable, FlatList, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -16,11 +16,32 @@ export default function HomeScreen({ navigation }) {
   useFocusEffect(
     React.useCallback(() => {
       (async () => {
-        const stored = await AsyncStorage.getItem('customPlaylists');
-        setCustomPlaylists(stored ? JSON.parse(stored) : []);
+        try {
+          const stored = await AsyncStorage.getItem('customPlaylists');
+          const parsed = stored ? JSON.parse(stored) : [];
+          setCustomPlaylists(Array.isArray(parsed) ? parsed : []);
+        } catch (e) {
+          console.error('Failed to load playlists:', e);
+          setCustomPlaylists([]);
+        }
       })();
     }, [])
   );
+
+  const handleDelete = async (idx) => {
+    try {
+      const existing = await AsyncStorage.getItem('customPlaylists');
+      if (!existing) return;
+      const parsed = JSON.parse(existing);
+      if (!Array.isArray(parsed)) return;
+
+      parsed.splice(idx, 1);
+      await AsyncStorage.setItem('customPlaylists', JSON.stringify(parsed));
+      setCustomPlaylists(parsed);
+    } catch (e) {
+      Alert.alert('Error', 'Could not delete playlist.');
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
@@ -49,7 +70,7 @@ export default function HomeScreen({ navigation }) {
               onPress={() =>
                 navigation.navigate('Flashcard', {
                   playlistId: `custom-${idx}`,
-                  custom: pl.slides,
+                  custom: Array.isArray(pl.slides) ? pl.slides : [],
                 })
               }
             >
@@ -62,16 +83,7 @@ export default function HomeScreen({ navigation }) {
                 >
                   <Text style={styles.iconText}>✏️</Text>
                 </Pressable>
-                <Pressable
-                  onPress={async () => {
-                    const existing = await AsyncStorage.getItem('customPlaylists');
-                    if (!existing) return;
-                    const parsed = JSON.parse(existing);
-                    parsed.splice(idx, 1);
-                    await AsyncStorage.setItem('customPlaylists', JSON.stringify(parsed));
-                    setCustomPlaylists(parsed);
-                  }}
-                >
+                <Pressable onPress={() => handleDelete(idx)}>
                   <Text style={[styles.iconText, { marginLeft: 10 }]}>🗑️</Text>
                 </Pressable>
               </View>
