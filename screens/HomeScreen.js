@@ -108,7 +108,7 @@ export default function HomeScreen({ navigation }) {
           ]}
           onPress={() => {
             if (isAtLimit) {
-              ToastAndroid.show('Maximum of 10 custom playlists can be created.', ToastAndroid.SHORT);
+              ToastAndroid.show(`Maximum of ${MAX_CUSTOM_PLAYLISTS} custom playlists can be created.`, ToastAndroid.SHORT);
             } else {
               navigation.navigate('CustomPlaylist');
             }
