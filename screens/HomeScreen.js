@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, FlatList, Alert, ToastAndroid } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -49,81 +50,83 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
-      <View style={styles.container}>
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>Nittu - Baby Flashcards</Text>
-        </View>
-
-        <Text style={styles.sectionHeader}>Default Playlists</Text>
-        {builtInPlaylists.map((item) => (
-          <Pressable
-            key={item.id}
-            style={styles.card}
-            onPress={() => navigation.navigate('Flashcard', { playlistId: item.id })}
-          >
-            <Text style={styles.cardText}>{item.title}</Text>
-          </Pressable>
-        ))}
-
-        {customPlaylists.map((pl, idx) => (
-          <View key={idx} style={styles.cardWithActions}>
-            <Pressable
-              style={[styles.card, styles.customCard]}
-              onPress={() =>
-                navigation.navigate('Flashcard', {
-                  playlistId: `custom-${idx}`,
-                  custom: Array.isArray(pl.slides) ? pl.slides : [],
-                })
-              }
-            >
-              <Text style={styles.cardText}>{pl.name}</Text>
-              <View style={styles.iconRow}>
-                <Pressable
-                  onPress={() =>
-                    navigation.navigate('CustomPlaylist', { editIndex: idx, playlistData: pl })
-                  }
-                >
-                  <Text style={styles.iconText}>✏️</Text>
-                </Pressable>
-                <Pressable onPress={() => handleDelete(idx)}>
-                  <Text style={[styles.iconText, { marginLeft: 10 }]}>🗑️</Text>
-                </Pressable>
-              </View>
-            </Pressable>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.container}>
+          <View style={styles.textContainer}>
+            <Text style={styles.title}>Nittu - Baby Flashcards</Text>
           </View>
-        ))}
 
-        {/* Actions */}
-        <Pressable
-          style={[styles.card, styles.customCard, isAtLimit && { backgroundColor: '#999' }]}
-          onPress={() => {
-            if (isAtLimit) {
-              ToastAndroid.show('You can only have 10 custom playlists.', ToastAndroid.SHORT);
-              return;
-            }
-            navigation.navigate('CustomPlaylist');
-          }}
-          disabled={isAtLimit}
-        >
-          <Text style={styles.cardText}>+ Create Custom Playlist</Text>
-        </Pressable>
+          <Text style={styles.sectionHeader}>Default Playlists</Text>
+          {builtInPlaylists.map((item) => (
+            <Pressable
+              key={item.id}
+              style={styles.card}
+              onPress={() => navigation.navigate('Flashcard', { playlistId: item.id })}
+            >
+              <Text style={styles.cardText}>{item.title}</Text>
+            </Pressable>
+          ))}
 
-        <Pressable style={[styles.card, styles.customCard]} onPress={() => navigation.navigate('Settings')}>
-          <Text style={styles.cardText}>⚙ Settings</Text>
-        </Pressable>
+          {customPlaylists.map((pl, idx) => (
+            <View key={idx} style={styles.cardWithActions}>
+              <Pressable
+                style={[styles.card, styles.customCard]}
+                onPress={() =>
+                  navigation.navigate('Flashcard', {
+                    playlistId: `custom-${idx}`,
+                    custom: Array.isArray(pl.slides) ? pl.slides : [],
+                  })
+                }
+              >
+                <Text style={styles.cardText}>{pl.name}</Text>
+                <View style={styles.iconRow}>
+                  <Pressable
+                    onPress={() =>
+                      navigation.navigate('CustomPlaylist', { editIndex: idx, playlistData: pl })
+                    }
+                  >
+                    <Text style={styles.iconText}>✏️</Text>
+                  </Pressable>
+                  <Pressable onPress={() => handleDelete(idx)}>
+                    <Text style={[styles.iconText, { marginLeft: 10 }]}>🗑️</Text>
+                  </Pressable>
+                </View>
+              </Pressable>
+            </View>
+          ))}
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Created with ❤️ by Jenu</Text>
+          {/* Actions */}
+          <Pressable
+            style={[styles.card, styles.customCard, isAtLimit && { backgroundColor: '#999' }]}
+            onPress={() => {
+              if (isAtLimit) {
+                ToastAndroid.show('You can only have 10 custom playlists.', ToastAndroid.SHORT);
+                return;
+              }
+              navigation.navigate('CustomPlaylist');
+            }}
+            disabled={isAtLimit}
+          >
+            <Text style={styles.cardText}>+ Create Custom Playlist</Text>
+          </Pressable>
+
+          <Pressable style={[styles.card, styles.customCard]} onPress={() => navigation.navigate('Settings')}>
+            <Text style={styles.cardText}>⚙ Settings</Text>
+          </Pressable>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Created with ❤️ by Jenu</Text>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { 
-    flex: 1, 
     padding: 20, 
+    paddingBottom: 40,
     backgroundColor: '#fff',
     justifyContent: 'space-between',
   },
