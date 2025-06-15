@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, FlatList, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, FlatList, Alert, ToastAndroid } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -9,6 +9,8 @@ const builtInPlaylists = [
   { id: 'numbers', title: '0–9' },
   { id: 'animals', title: 'Animals 🐾' },
 ];
+
+const MAX_CUSTOM_PLAYLISTS = 10;
 
 export default function HomeScreen({ navigation }) {
   const [customPlaylists, setCustomPlaylists] = useState([]);
@@ -43,6 +45,8 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
+  const isAtLimit = customPlaylists.length >= MAX_CUSTOM_PLAYLISTS;
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
       <View style={styles.container}>
@@ -50,7 +54,6 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.title}>Nittu - Baby Flashcards</Text>
         </View>
 
-        {/* Default Playlists */}
         <Text style={styles.sectionHeader}>Default Playlists</Text>
         {builtInPlaylists.map((item) => (
           <Pressable
@@ -62,7 +65,6 @@ export default function HomeScreen({ navigation }) {
           </Pressable>
         ))}
 
-        {/* Custom Playlists */}
         {customPlaylists.map((pl, idx) => (
           <View key={idx} style={styles.cardWithActions}>
             <Pressable
@@ -92,7 +94,17 @@ export default function HomeScreen({ navigation }) {
         ))}
 
         {/* Actions */}
-        <Pressable style={[styles.card, styles.customCard]} onPress={() => navigation.navigate('CustomPlaylist')}>
+        <Pressable
+          style={[styles.card, styles.customCard, isAtLimit && { backgroundColor: '#999' }]}
+          onPress={() => {
+            if (isAtLimit) {
+              ToastAndroid.show('You can only have 10 custom playlists.', ToastAndroid.SHORT);
+              return;
+            }
+            navigation.navigate('CustomPlaylist');
+          }}
+          disabled={isAtLimit}
+        >
           <Text style={styles.cardText}>+ Create Custom Playlist</Text>
         </Pressable>
 
