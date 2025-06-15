@@ -101,15 +101,18 @@ export default function HomeScreen({ navigation }) {
         />
 
         <Pressable
-          style={[styles.card, styles.customButton, isAtLimit && { backgroundColor: '#999' }]}
+          style={[
+            styles.card,
+            styles.customButton,
+            isAtLimit && { backgroundColor: '#999' },
+          ]}
           onPress={() => {
             if (isAtLimit) {
-              ToastAndroid.show('You can only have 10 custom playlists.', ToastAndroid.SHORT);
-              return;
+              ToastAndroid.show('Maximum of 10 custom playlists can be created.', ToastAndroid.SHORT);
+            } else {
+              navigation.navigate('CustomPlaylist');
             }
-            navigation.navigate('CustomPlaylist');
           }}
-          disabled={isAtLimit}
         >
           <Text style={styles.cardText}>+ Create Custom Playlist</Text>
         </Pressable>
