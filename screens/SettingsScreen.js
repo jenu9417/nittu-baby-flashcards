@@ -23,7 +23,7 @@ export default function SettingsScreen({ navigation }) {
   } = useFlashcardStore();
 
   const [localSettings, setLocalSettings] = useState({
-    delay: delay ?? 3000,
+    delay: delay ?? 1500,
     fontSize: fontSize ?? 160,
     fontColor: fontColor ?? '#ffffff',
     fontFamily: fontFamily ?? 'System',

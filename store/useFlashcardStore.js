@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const useFlashcardStore = create((set) => ({
-  delay: 3000,
+  delay: 1500,
   fontSize: 160,
   fontColor: '#ffffff',
   fontFamily: 'System',

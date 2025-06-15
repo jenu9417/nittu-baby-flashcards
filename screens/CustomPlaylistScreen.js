@@ -30,7 +30,7 @@ export default function CustomPlaylistScreen({ navigation }) {
   const { editIndex, playlistData } = route.params || {};
 
   const [playlistName, setPlaylistName] = useState('');
-  const [autoplayDelay, setAutoplayDelay] = useState('3000');
+  const [autoplayDelay, setAutoplayDelay] = useState('1500');
   const [slides, setSlides] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [newSlide, setNewSlide] = useState({
