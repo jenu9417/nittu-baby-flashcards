@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, TextInput, StyleSheet, Pressable, FlatList, Modal
+  View, Text, TextInput, StyleSheet, Pressable, FlatList, Modal, ToastAndroid
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
@@ -18,6 +18,8 @@ const colorOptions = [
   { name: 'Pink', value: '#ffc0cb' },
   { name: 'Gray', value: '#808080' },
 ];
+
+const MAX_SLIDES = 30;
 
 const isValidHex = (val) => /^#([0-9A-F]{3}){1,2}$/i.test(val);
 
@@ -116,7 +118,19 @@ export default function CustomPlaylistScreen({ navigation }) {
         <Text style={styles.watermark}>Autoplay Delay (ms)</Text>
       </View>
 
-      <Pressable style={styles.button} onPress={() => setModalVisible(true)}>
+      <Pressable
+        style={[
+          styles.button,
+          slides.length >= MAX_SLIDES && { backgroundColor: '#999' },
+        ]}
+        onPress={() => {
+          if (slides.length >= MAX_SLIDES) {
+            ToastAndroid.show(`Maximum of ${MAX_SLIDES} slides can be added.`, ToastAndroid.SHORT);
+          } else {
+            setModalVisible(true);
+          }
+        }}
+      >
         <Text style={styles.buttonText}>Add Slide</Text>
       </Pressable>
 
