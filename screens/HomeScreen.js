@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, FlatList, Alert, ToastAndroid } from 'react-native';
+import { View, Text, StyleSheet, Pressable, FlatList, Alert, ToastAndroid, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -12,6 +11,7 @@ const builtInPlaylists = [
 ];
 
 const MAX_CUSTOM_PLAYLISTS = 10;
+const MAX_LIST_HEIGHT = Dimensions.get('window').height * 0.36;
 
 export default function HomeScreen({ navigation }) {
   const [customPlaylists, setCustomPlaylists] = useState([]);
@@ -50,24 +50,28 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.container}>
-          <View style={styles.textContainer}>
-            <Text style={styles.title}>Nittu - Baby Flashcards</Text>
-          </View>
+      <View style={styles.container}>
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>Nittu - Baby Flashcards</Text>
+        </View>
 
-          <Text style={styles.sectionHeader}>Default Playlists</Text>
-          {builtInPlaylists.map((item) => (
-            <Pressable
-              key={item.id}
-              style={styles.card}
-              onPress={() => navigation.navigate('Flashcard', { playlistId: item.id })}
-            >
-              <Text style={styles.cardText}>{item.title}</Text>
-            </Pressable>
-          ))}
+        <Text style={styles.sectionHeader}>Default Playlists</Text>
+        {builtInPlaylists.map((item) => (
+          <Pressable
+            key={item.id}
+            style={styles.card}
+            onPress={() => navigation.navigate('Flashcard', { playlistId: item.id })}
+          >
+            <Text style={styles.cardText}>{item.title}</Text>
+          </Pressable>
+        ))}
 
-          {customPlaylists.map((pl, idx) => (
+        <Text style={styles.sectionHeader}>Custom Playlists</Text>
+        <FlatList
+          data={customPlaylists}
+          keyExtractor={(_, idx) => idx.toString()}
+          style={{ maxHeight: MAX_LIST_HEIGHT }}
+          renderItem={({ item: pl, index: idx }) => (
             <View key={idx} style={styles.cardWithActions}>
               <Pressable
                 style={[styles.card, styles.customCard]}
@@ -93,32 +97,31 @@ export default function HomeScreen({ navigation }) {
                 </View>
               </Pressable>
             </View>
-          ))}
+          )}
+        />
 
-          {/* Actions */}
-          <Pressable
-            style={[styles.card, styles.customCard, isAtLimit && { backgroundColor: '#999' }]}
-            onPress={() => {
-              if (isAtLimit) {
-                ToastAndroid.show('You can only have 10 custom playlists.', ToastAndroid.SHORT);
-                return;
-              }
-              navigation.navigate('CustomPlaylist');
-            }}
-            disabled={isAtLimit}
-          >
-            <Text style={styles.cardText}>+ Create Custom Playlist</Text>
-          </Pressable>
+        <Pressable
+          style={[styles.card, styles.customButton, isAtLimit && { backgroundColor: '#999' }]}
+          onPress={() => {
+            if (isAtLimit) {
+              ToastAndroid.show('You can only have 10 custom playlists.', ToastAndroid.SHORT);
+              return;
+            }
+            navigation.navigate('CustomPlaylist');
+          }}
+          disabled={isAtLimit}
+        >
+          <Text style={styles.cardText}>+ Create Custom Playlist</Text>
+        </Pressable>
 
-          <Pressable style={[styles.card, styles.customCard]} onPress={() => navigation.navigate('Settings')}>
-            <Text style={styles.cardText}>⚙ Settings</Text>
-          </Pressable>
+        <Pressable style={[styles.card, styles.customButton]} onPress={() => navigation.navigate('Settings')}>
+          <Text style={styles.cardText}>⚙ Settings</Text>
+        </Pressable>
 
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Created with ❤️ by Jenu</Text>
-          </View>
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Created with ❤️ by Jenu</Text>
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -141,7 +144,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     backgroundColor: '#000',
-    marginVertical: 10,
+    marginVertical: 5,
   },
   textContainer: {
     borderWidth: 2,
@@ -151,12 +154,13 @@ const styles = StyleSheet.create({
     marginBottom: 10
   },
   customCard: { backgroundColor: '#444' },
+  customButton: { backgroundColor: '#000' },
   cardText: { color: '#fff', fontSize: 18 },
   sectionHeader: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginTop: 15,
-    marginBottom: 5,
+    marginTop: 1,
+    marginBottom: 1,
     color: '#333',
   },
   cardGroup: {
@@ -180,7 +184,7 @@ const styles = StyleSheet.create({
   },
   cardWithActions: {
     position: 'relative',
-    marginBottom: 10,
+    marginBottom: 1,
   },
   iconRow: {
     position: 'absolute',
@@ -196,6 +200,7 @@ const styles = StyleSheet.create({
   footer: {
     alignItems: 'center',
     marginTop: 'auto',
+    marginTop: 5,
     marginBottom: 1,
   },
   footerText: {
