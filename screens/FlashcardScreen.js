@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFlashcardStore } from '../store/useFlashcardStore';
 
 export default function FlashcardScreen({ route, navigation }) {
-  const { playlistId, custom } = route.params;
+  const { playlistId = 'alphabet', custom = null } = route?.params || {};
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const timerRef = useRef(null);
@@ -19,7 +19,7 @@ export default function FlashcardScreen({ route, navigation }) {
   const insets = useSafeAreaInsets();
 
   const isCustom = !!custom;
-  const playlist = isCustom ? custom : currentPlaylist;
+  const playlist = Array.isArray(isCustom ? custom : currentPlaylist) ? (isCustom ? custom : currentPlaylist) : [];
 
   // Load default playlist if not custom
   useEffect(() => {
@@ -47,7 +47,9 @@ export default function FlashcardScreen({ route, navigation }) {
         }
       }, delay);
     }
-    return () => clearTimeout(timerRef.current);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [index, paused, playlist]);
 
   const next = () => {
@@ -61,7 +63,7 @@ export default function FlashcardScreen({ route, navigation }) {
     if (index > 0) setIndex(index - 1);
   };
 
-  const slide = playlist[index];
+  const slide = playlist?.[index] || null;
 
   return (
     <View style={[styles.container, { backgroundColor: slide?.backgroundColor || backgroundColor }]}>
